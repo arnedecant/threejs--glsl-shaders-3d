@@ -1,0 +1,219 @@
+// -------------------------------------------------------------------
+// :: App
+// -------------------------------------------------------------------
+
+import Engine from './engine'
+
+class App {
+
+	constructor() {
+
+		// create new engine: setup scene, camera & lighting
+		// and load vertex and fragment shaders in memory
+
+		window.ENGINE = new Engine({ container: document.body })
+		window.APP = this
+		window.SHADERS = {
+			vertex: [],
+			fragment: []
+		}
+
+		// elements
+
+		this.$interface = document.querySelector('.interface')
+		this.$index = this.$interface.querySelector('input[name="index"]')
+
+		// properties
+
+		// events
+
+		window.addEventListener('resize', this.resize.bind(this), false)
+		window.addEventListener('mousemove', this.mousemove.bind(this))
+		window.addEventListener('touchmove', this.mousemove.bind(this))
+		document.body.addEventListener('click', this.click.bind(this))
+		document.body.addEventListener('submit', this.submit.bind(this))
+
+		// init
+
+		const vertexShaders = [...document.querySelectorAll('[data-shader^="vertex"]')] // .textContent
+		const fragmentShaders = [...document.querySelectorAll('[data-shader^="fragment"]')] // .textContent
+
+		vertexShaders.forEach((s) => SHADERS.vertex.push(s.textContent))
+		fragmentShaders.forEach((s) => SHADERS.fragment.push(s.textContent))
+
+		this.setup()
+
+	}
+
+	setup() {
+
+		this.clock = new THREE.Clock()
+
+		ENGINE.loader.setPath('assets/')
+
+		this.url = new URL(window.location.href)
+		const index = this.url.searchParams.get('index') || 0
+		this.index = parseInt(index) || 0
+		this.$index.value = this.index
+
+		const uniforms = THREE.UniformsUtils.merge([THREE.UniformsLib['common'], THREE.UniformsLib['lights']])
+
+		this.uniforms = {
+			u_time: { value: 0.0 },
+			u_mouse: { value: { x: 0.0, y: 0.0 } },
+			u_resolution: { value: { x: 0.0, y: 0.0 } },
+			u_radius: { value: 20.0 },
+			u_color: { value: new THREE.Color(0xb7ff00) },
+			u_tex_lava: { value: ENGINE.load('explosion.png') },
+			u_light_position: { value: ENGINE.directionalLight.position.clone() },
+			u_rim_color: { value: new THREE.Color(0xffffff) },
+			u_rim_strength: { value: 1.6 },
+			u_rim_width: { value: 0.6 },
+			...uniforms
+		}
+		
+		this.resize()
+		this.init()
+
+	}
+
+	init() {
+		
+		ENGINE.clear()
+		ENGINE.scene.background = new THREE.Color(0x333333)
+
+		this.addMesh(this.index)
+		
+		this.render()
+
+	}
+
+	addMesh(index = this.index) {
+
+		let geometry = new THREE.BoxGeometry(30, 30, 30, 10, 10, 10)
+		let material = new THREE.ShaderMaterial({ 
+			uniforms: this.uniforms,
+			vertexShader: SHADERS.vertex[this.index],
+			fragmentShader: SHADERS.fragment[this.index],
+			lights: true
+		})
+
+		if (index == 0 || index == 2) material.wireframe = true
+		if (index >= 1 && index <= 3) geometry = new THREE.IcosahedronGeometry(20, 4)
+		if (index == 4) geometry = new THREE.TorusKnotGeometry(10, 5, 100, 16)
+
+		const mesh = new THREE.Mesh(geometry, material)
+
+		ENGINE.add(mesh)
+
+	}
+
+	resize(e) {
+
+		ENGINE.resize(this.fill)
+		
+		if (!this.uniforms.u_resolution) return
+
+		this.uniforms.u_resolution.value.x = window.innerWidth
+		this.uniforms.u_resolution.value.y = window.innerHeight
+
+	}
+
+	mousemove(e) {
+
+		if (!this.uniforms || this.uniforms.u_mouse) return
+
+		this.uniforms.u_mouse.value.x = (e.touches) ? e.touches[0].clientX : e.clientX
+		this.uniforms.u_mouse.value.y = (e.touches) ? e.touches[1].clientY : e.clientY
+
+	}
+
+	click(e) {
+
+		// skip click for labels
+
+		if (e.target.tagName === 'LABEL') return
+
+		// store temporary values
+
+		const name = e.target.getAttribute('name')
+		const tempIndex = this.index
+
+		// handle logic
+
+		switch (name) {
+			case 'prev': this.index--
+				break
+			case 'next': this.index++
+				break
+			default: return
+		}
+
+		// reload page
+
+		const reload = this.reload()
+		if (reload) return
+
+		// reset if reload failed
+		
+		this.index = tempIndex
+
+	}
+
+	submit(e) {
+
+		e.preventDefault()
+
+		const tempIndex = this.index
+		this.index = parseInt(this.$index.value)
+
+		const reload = this.reload()
+		if (!reload) this.index = tempIndex
+
+	}
+
+	reload() {
+
+		let reload = true
+
+		if (!SHADERS.vertex[this.index]) reload = false
+		if (!SHADERS.fragment[this.index]) reload = false
+
+		if (reload) {
+			this.url.searchParams.set('index', this.index)
+		} else {
+			alert('Index unreachable')
+			return false
+		}
+
+		window.location.href = this.url
+		return true
+
+	}
+
+	render(timestamp) {
+
+		if (window.STOP) return
+
+		const delta = this.clock.getDelta();
+
+		this.uniforms.u_time.value += delta
+
+		window.requestAnimationFrame(this.render.bind(this))
+
+		ENGINE.render(timestamp)
+
+	}
+
+}
+
+export default new App()
+
+// debugging helpers
+
+window.onError = (error) => console.error(JSON.stringify(error))
+window.stop = () => window.STOP = true
+window.start = (once = false) => {
+	if (!once) window.STOP = false
+	APP.render()
+}
