@@ -8,11 +8,11 @@ import Preloader from "./helpers/preloader"
 
 export default class Engine {
 
-	constructor({ container = document.body, size = 1, background = null, debug = false }) {
+	constructor({ container = document.body, size = 1, background = null, debug = false, assetsPath = null }) {
 
 		// set properties
 
-		this.config = { container, size, background, debug }
+		this.config = { container, size, background, debug, assetsPath }
 		// this.config = arguments[0]
 		
 		this.mouse = new THREE.Vector2()
@@ -35,7 +35,13 @@ export default class Engine {
 
 		// this.loader = new THREE.FBXLoader()
 		this.loader = new THREE.TextureLoader()
+		this.cubeLoader = new THREE.CubeTextureLoader()
 		// this.preloader = new Preloader()
+
+		if (this.config.assetsPath) {
+			this.loader.setPath(this.config.assetsPath)
+			this.cubeLoader.setPath(this.config.assetsPath)
+		}
 
 		// add events
 
@@ -247,7 +253,11 @@ export default class Engine {
 	}
 	load(path, fn) {
 
-		return this.loader.load(path, fn)
+		let loader = this.loader
+
+		if (Array.isArray(path)) loader = this.cubeLoader
+
+		return loader.load(path, fn)
 
 	}
 
