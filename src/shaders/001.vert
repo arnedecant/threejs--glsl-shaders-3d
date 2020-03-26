@@ -4,8 +4,8 @@
 uniform float u_time;
 uniform float u_radius;
 
-varying vec3 vPosition;
-varying vec3 vLightIntensity;
+varying vec3 v_position;
+varying vec3 v_light_intensity;
 
 float getDelta() {
 
@@ -24,8 +24,8 @@ void main() {
     #include <project_vertex>
     #include <lights_lambert_vertex>
 
-    vLightIntensity = vLightFront + ambientLightColor;
-    vPosition = position;
+    v_light_intensity = vLightFront + ambientLightColor;
+    v_position = position;
 
     vec3 v = normalize(position) * u_radius;
     vec3 pos = delta * position + (1.0 - delta) * v;

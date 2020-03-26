@@ -102,10 +102,16 @@ class App {
 			fragmentShader: SHADERS.fragment[this.index],
 			lights: true
 		})
+		
+		const config = {
+			wireframe: [0, 2],
+			icosahedron: [2, 3, 4],
+			torus: [5, 6]
+		}
 
-		if (index == 0 || index == 2) material.wireframe = true
-		if (index >= 1 && index <= 3) geometry = new THREE.IcosahedronGeometry(20, 4)
-		if (index == 4 || index == 5) geometry = new THREE.TorusKnotGeometry(10, 5, 100, 16)
+		if (config.wireframe.includes(index)) material.wireframe = true
+		if (config.icosahedron.includes(index)) geometry = new THREE.IcosahedronGeometry(20, 4)
+		if (config.torus.includes(index)) geometry = new THREE.TorusKnotGeometry(10, 5, 100, 16)
 
 		const mesh = new THREE.Mesh(geometry, material)
 

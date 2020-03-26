@@ -1,21 +1,14 @@
-#include <common>
-#include <lights_pars_begin>
+#include <noise>
 
-varying vec3 v_position;
-varying mat4 v_model_matrix;
-varying vec3 v_world_normal;
-varying vec3 v_light_intensity;
+uniform float u_time;
 
-void main() {
+varying float v_noise;
 
-    #include <simple_lambert_vertex>
+void main() {	
 
-    v_light_intensity = vLightFront + ambientLightColor;
+    v_noise = turbulence( normal * 0.5 + u_time * 0.25 );
+    vec3 pos = position + normal * v_noise * 10.0; 
 
-    v_world_normal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
-    v_position = position;
-    v_model_matrix = modelMatrix;
-
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 
 }
