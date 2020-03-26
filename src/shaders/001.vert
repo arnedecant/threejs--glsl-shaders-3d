@@ -16,6 +16,7 @@ float getDelta() {
 void main() {
 
     float delta = getDelta();
+    vec3 vIndirectFront;
     vec3 vLightFront;
     vec3 objectNormal = delta * normal + (1.0 - delta) * normalize(position);
 
