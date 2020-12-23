@@ -104,13 +104,13 @@ class App {
 		})
 		
 		const config = {
-			wireframe: [0, 2],
-			icosahedron: [2, 3, 4],
+			wireframe: [0, 2, 9],
+			icosahedron: [2, 3, 4, 8, 9],
 			torus: [5, 6]
 		}
 
 		if (config.wireframe.includes(index)) material.wireframe = true
-		if (config.icosahedron.includes(index)) geometry = new THREE.IcosahedronGeometry(20, 4)
+		if (config.icosahedron.includes(index)) geometry = new THREE.IcosahedronGeometry(20, 5)
 		if (config.torus.includes(index)) geometry = new THREE.TorusKnotGeometry(10, 5, 100, 16)
 
 		const mesh = new THREE.Mesh(geometry, material)
